@@ -14,4 +14,7 @@ GtkWidget *play_button;
 GtkWidget *progress_bar;
 
 GtkWidget *config_page;
+GtkListStore *icon_list;
+GtkWidget *icon_view;
+char *open_dir;
 #endif
