@@ -6,6 +6,9 @@
 #include "config.h"
 
 
+GtkListStore *
+populate_store(GtkListStore *store, gchar *dir_path);
+
   void
 choose_directory(GtkWidget *button,
     gpointer user_data)
@@ -29,6 +32,7 @@ choose_directory(GtkWidget *button,
         GTK_FILE_CHOOSER(open_dir_dialog));
     if(access(filename, F_OK) != -1) {
       open_dir = filename;
+      populate_store(store, open_dir);
     }
   }
 
@@ -36,93 +40,103 @@ choose_directory(GtkWidget *button,
   printf("%p%p", button, user_data);
 }
 
-  void
-populate_icon_list()
+  GtkListStore *
+populate_store(GtkListStore *store, gchar *dir_path)
 {
-  gtk_list_store_clear(icon_list);
-  printf("%s\n", open_dir);
+  GtkTreeIter ttt = {};
+  GtkTreeIter *iter = &ttt;
+  GDir *dir;
+  const gchar *cur_file;
+
+  gtk_list_store_clear(store);
+  dir = g_dir_open(dir_path, 0, NULL);
+  if(!dir)
+    return store;
+
+  cur_file = g_dir_read_name(dir);
+
+  while(cur_file != NULL)
+  {
+    cur_file = g_dir_read_name(dir);
+
+    gchar *path = g_build_filename(dir_path, cur_file, NULL);
+    if(g_file_test(path, G_FILE_TEST_IS_DIR))
+      continue;
+    gchar *display_name = g_filename_to_utf8(cur_file, -1, NULL,
+        NULL, NULL);
+
+    GdkPixbuf *cur_pixbuf = gdk_pixbuf_new_from_file(path, &cg_error);
+    if(cg_error != NULL) {
+      printf("%s\n", cg_error->message);
+      cg_error = NULL;
+      cur_pixbuf = gdk_pixbuf_new_from_file("./images/placeholder.jpg",
+          &cg_error);
+    }
+    gdk_pixbuf_scale_simple(GDK_PIXBUF(cur_pixbuf),
+        15, 15, GDK_INTERP_BILINEAR);
+
+    gtk_list_store_append(GTK_LIST_STORE(store), iter);
+    gtk_list_store_set(GTK_LIST_STORE(store), iter,
+        COL_PATH, path,
+        COL_DISPLAY_NAME, display_name,
+        COL_IS_DIRECTORY, FALSE,
+        COL_PIXBUF, cur_pixbuf,
+        -1);
+    g_free(path);
+    g_free(display_name);
+  }
+
+  g_dir_close(dir);
+
+  return store;
 }
 
-  static void
-edited(GtkCellRendererText *cell,
-    gchar *path_string,
-    gchar *text,
-    gpointer *data)
+  GtkListStore *
+create_store(void)
 {
-  GtkTreeModel *model = gtk_icon_view_get_model(GTK_ICON_VIEW(data));
-  GtkTreePath *path = gtk_tree_path_new_from_string(path_string);
-  GtkTreeIter iter;
-
-  gtk_tree_model_get_iter(model, &iter, path);
-  gtk_list_store_set(GTK_LIST_STORE(model), &iter, 0, "", -1);
-
-  gtk_tree_path_free(path);
-
-  printf("%p%p", cell, text);
-}
-
-  void
-set_cell_data(GtkCellLayout *cell_layout, GtkCellRenderer *cell,
-    GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer data)
-{
-  GdkPixbuf *pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, TRUE,
-      8, 24, 24);
-  guint32 pixel = 0;
-  gdk_pixbuf_fill(pixbuf, pixel);
-
-  g_object_set(cell, "pixbuf", pixbuf, NULL);
-
-  g_object_unref(pixbuf);
-  printf("%p%p%p%p", cell_layout, tree_model, iter, data);
-}
-
-  GtkWidget *
-create_icon_list()
-{
-  GtkCellRenderer *renderer;
-
-  icon_list = gtk_list_store_new(1, GDK_TYPE_PIXBUF);
-  icon_view = gtk_icon_view_new_with_model(
-      GTK_TREE_MODEL(icon_list));
-  gtk_icon_view_set_selection_mode(GTK_ICON_VIEW(icon_view),
-      GTK_SELECTION_SINGLE);
-  gtk_icon_view_set_item_orientation(GTK_ICON_VIEW(icon_view),
-      GTK_ORIENTATION_HORIZONTAL);
-  gtk_icon_view_set_reorderable(GTK_ICON_VIEW(icon_view), TRUE);
-
-  renderer = gtk_cell_renderer_pixbuf_new();
-  gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(icon_view),
-      renderer, TRUE);
-  gtk_cell_layout_set_cell_data_func(GTK_CELL_LAYOUT(icon_view),
-      renderer,
-      set_cell_data,
-      NULL, NULL);
-
-  renderer = gtk_cell_renderer_text_new();
-  gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(icon_view), renderer,
-      TRUE);
-  g_object_set(renderer, "editable", TRUE, NULL);
-  g_signal_connect(renderer, "edited", G_CALLBACK(edited), icon_view);
-  gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(icon_view), renderer,
-      "text", 0, NULL);
-
-  populate_icon_list();
-
-  return icon_view;
+  store = gtk_list_store_new(NUM_COLS,
+      G_TYPE_STRING,
+      G_TYPE_STRING,
+      GDK_TYPE_PIXBUF,
+      G_TYPE_BOOLEAN);
+  return store;
 }
 
   GtkWidget *
-create_config_page()
+create_config_page(void)
 {
   GtkWidget *open_dir_button = gtk_button_new_with_label("Open Directory");
   g_signal_connect(GTK_WIDGET(open_dir_button), "clicked",
       G_CALLBACK(choose_directory), NULL);
 
+  GtkWidget *sw = gtk_scrolled_window_new(NULL, NULL);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw),
+      GTK_POLICY_AUTOMATIC,
+      GTK_POLICY_AUTOMATIC);
+  gtk_scrolled_window_set_min_content_width(
+      GTK_SCROLLED_WINDOW(sw), 720);
+  gtk_scrolled_window_set_min_content_height(
+      GTK_SCROLLED_WINDOW(sw), 480);
+
+  create_store();
+
+  GtkWidget *icon_view = gtk_icon_view_new_with_model(GTK_TREE_MODEL(store));
+  gtk_icon_view_set_selection_mode(GTK_ICON_VIEW(icon_view),
+      GTK_SELECTION_MULTIPLE);
+  gtk_icon_view_set_text_column(GTK_ICON_VIEW(icon_view),
+      COL_DISPLAY_NAME);
+  gtk_icon_view_set_pixbuf_column(GTK_ICON_VIEW(icon_view),
+      COL_PIXBUF);
+  //gtk_icon_view_set_item_width(GTK_ICON_VIEW(icon_view), -1);
+  //  g_signal_connect(icon_view, "item-activated",
+  //      G_CALLBACK(item_activated), store);
+
+  gtk_container_add(GTK_CONTAINER(sw), GTK_WIDGET(icon_view));
+
   config_page = gtk_grid_new();
-  gtk_grid_attach(GTK_GRID(config_page), create_icon_list(),
-      1, 1, 720, 480);
+  gtk_grid_attach(GTK_GRID(config_page), sw, 1, 1, 720, 480);
   gtk_grid_attach_next_to(GTK_GRID(config_page), open_dir_button,
-      icon_view, GTK_POS_RIGHT, 75, 75);
+      sw, GTK_POS_RIGHT, 75, 75);
 
   return config_page;
 }

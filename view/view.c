@@ -77,7 +77,7 @@ create_view_page()
 
   //pixbuff
   view = gtk_image_new();
-  current_pixbuf = gdk_pixbuf_new_from_file_at_size("",
+  current_pixbuf = gdk_pixbuf_new_from_file_at_size("./images/placeholder.jpg",
       720,
       480,
       &cg_error);
