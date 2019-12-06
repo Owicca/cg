@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <gtk/gtk.h>
 
-#include "../data.h"
+#include "../main.h"
 #include "view.h"
 
 
@@ -71,7 +71,7 @@ create_progress_bar()
 }
 
   GtkWidget *
-create_view_page()
+create_view_page(void)
 {
   view_page = gtk_grid_new();
 

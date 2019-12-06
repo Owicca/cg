@@ -1,11 +1,6 @@
-#include <stdio.h>
-#include <gtk/gtk.h>
-
-#include "data.h"
 #include "main.h"
-#include "view/view.c"
-#include "config/config.c"
 
+GError *cg_error = NULL;
 
   static void
 activate(GtkApplication* app, gpointer user_data)

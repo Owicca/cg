@@ -2,7 +2,7 @@
 #include <gtk/gtk.h>
 #include <unistd.h>
 
-#include "../data.h"
+#include "../main.h"
 #include "config.h"
 
 
@@ -43,7 +43,8 @@ choose_directory(GtkWidget *button,
   GtkListStore *
 populate_store(GtkListStore *store, gchar *dir_path)
 {
-  GtkTreeIter ttt = {};
+  // dummy values to get rid of warnings
+  GtkTreeIter ttt = {5264354, NULL, NULL, NULL};
   GtkTreeIter *iter = &ttt;
   GDir *dir;
   const gchar *cur_file;

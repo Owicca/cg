@@ -1,4 +1,9 @@
+#ifndef CG_CONFIG_H
+#define CG_CONFIG_H
+
 #include <gtk/gtk.h>
+
+extern GError *cg_error;
 
 enum{
   COL_PATH,
@@ -9,4 +14,6 @@ enum{
 };
 
 GtkWidget *
-create_config_page();
+create_config_page(void);
+
+#endif
