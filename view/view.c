@@ -70,6 +70,23 @@ create_progress_bar()
   return progress_bar;
 }
 
+  gboolean
+update_view(GtkWidget *view, const gchar *path)
+{
+  GdkPixbuf *curr = gdk_pixbuf_new_from_file_at_scale(path, 720, 480, TRUE,
+      &cg_error);
+  if(cg_error != NULL) {
+    printf("[ERROR][in update_view] %s\n", cg_error->message);
+    cg_error = NULL;
+    return FALSE;
+  }
+  gtk_image_set_from_pixbuf(
+      GTK_IMAGE(view),
+      GDK_PIXBUF(curr));
+
+  return TRUE;
+}
+
   GtkWidget *
 create_view_page(void)
 {
@@ -77,13 +94,8 @@ create_view_page(void)
 
   //pixbuff
   view = gtk_image_new();
-  current_pixbuf = gdk_pixbuf_new_from_file_at_size("./images/placeholder.jpg",
-      720,
-      480,
-      &cg_error);
-  gtk_image_set_from_pixbuf(
-      GTK_IMAGE(view),
-      GDK_PIXBUF(current_pixbuf));
+  gchar *placeholder_path = "./images/placeholder.jpg";
+  update_view(view, placeholder_path);
 
   //view_page grid
   gtk_container_set_border_width(GTK_CONTAINER(view_page), 15);

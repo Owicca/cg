@@ -10,8 +10,10 @@ activate(GtkApplication* app, gpointer user_data)
   gtk_window_set_default_size(GTK_WINDOW(window), 800, 600);
 
   GtkWidget *pages = gtk_notebook_new();
-  gtk_notebook_append_page(GTK_NOTEBOOK(pages), create_view_page(), gtk_label_new("View"));
-  gtk_notebook_append_page(GTK_NOTEBOOK(pages), create_config_page(), gtk_label_new("Config"));
+  gtk_notebook_append_page(GTK_NOTEBOOK(pages), create_view_page(),
+      gtk_label_new("View"));
+  gtk_notebook_append_page(GTK_NOTEBOOK(pages), create_config_page(),
+      gtk_label_new("Config"));
   gtk_container_add(GTK_CONTAINER(window), pages);
 
   gtk_widget_show_all(window);

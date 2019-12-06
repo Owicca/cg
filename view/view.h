@@ -12,4 +12,7 @@ void
 toggle_play(GtkWidget *button,
     gpointer user_data);
 
+gboolean
+update_view(GtkWidget *view, const gchar *path);
+
 #endif

@@ -10,6 +10,20 @@ GtkListStore *
 populate_store(GtkListStore *store, gchar *dir_path);
 
   void
+item_activated(GtkIconView *icon_view, GtkTreePath *path,
+    gpointer user_data)
+{
+  GtkTreeIter iter;
+  GdkPixbuf *curr = gdk_pixbuf_new_from_file("./images/placeholder.jpg", &cg_error);
+  gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+  gtk_tree_model_get_iter(GTK_TREE_MODEL(store), &iter, path);
+  gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, 2, &curr, -1);
+  const gchar *pth = gdk_pixbuf_get_option(GDK_PIXBUF(curr), "path");
+  update_view(view, pth);
+
+  printf("%p%p\n", icon_view, user_data);
+}
+  void
 choose_directory(GtkWidget *button,
     gpointer user_data)
 {
@@ -66,15 +80,15 @@ populate_store(GtkListStore *store, gchar *dir_path)
     gchar *display_name = g_filename_to_utf8(cur_file, -1, NULL,
         NULL, NULL);
 
-    GdkPixbuf *cur_pixbuf = gdk_pixbuf_new_from_file(path, &cg_error);
+    GdkPixbuf *cur_pixbuf = gdk_pixbuf_new_from_file_at_scale(path,
+        150, 150, TRUE, &cg_error);
     if(cg_error != NULL) {
       printf("%s\n", cg_error->message);
       cg_error = NULL;
-      cur_pixbuf = gdk_pixbuf_new_from_file("./images/placeholder.jpg",
-          &cg_error);
+      cur_pixbuf = gdk_pixbuf_new_from_file_at_scale("./images/placeholder.jpg",
+          150, 150, TRUE, &cg_error);
     }
-    gdk_pixbuf_scale_simple(GDK_PIXBUF(cur_pixbuf),
-        15, 15, GDK_INTERP_BILINEAR);
+    gdk_pixbuf_set_option(GDK_PIXBUF(cur_pixbuf), "path", path);
 
     gtk_list_store_append(GTK_LIST_STORE(store), iter);
     gtk_list_store_set(GTK_LIST_STORE(store), iter,
@@ -128,12 +142,18 @@ create_config_page(void)
       COL_DISPLAY_NAME);
   gtk_icon_view_set_pixbuf_column(GTK_ICON_VIEW(icon_view),
       COL_PIXBUF);
-  //gtk_icon_view_set_item_width(GTK_ICON_VIEW(icon_view), -1);
-  //  g_signal_connect(icon_view, "item-activated",
-  //      G_CALLBACK(item_activated), store);
+  gtk_icon_view_set_item_width(GTK_ICON_VIEW(icon_view), 50);
+  gtk_icon_view_set_activate_on_single_click(GTK_ICON_VIEW(icon_view),
+      TRUE);
+  g_signal_connect(icon_view, "item-activated",
+      G_CALLBACK(item_activated), store);
 
   gtk_container_add(GTK_CONTAINER(sw), GTK_WIDGET(icon_view));
 
+  //config_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+  //gtk_box_pack_start(GTK_BOX(config_page), sw, TRUE, TRUE, 15);
+  //gtk_box_pack_start(GTK_BOX(config_page), open_dir_button, TRUE,
+  //    TRUE, 15);
   config_page = gtk_grid_new();
   gtk_grid_attach(GTK_GRID(config_page), sw, 1, 1, 720, 480);
   gtk_grid_attach_next_to(GTK_GRID(config_page), open_dir_button,
