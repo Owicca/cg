@@ -20,7 +20,6 @@ class App(Gtk.Window):
         notebook = Gtk.Notebook()
         notebook.append_page(view_page, Gtk.Label("View"))
         notebook.append_page(config_page, Gtk.Label("Config"))
-        store.populate("./images")
 
         config_page.iconv.connect("item-activated", view_page.change_image, {
             "notebook": notebook

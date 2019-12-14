@@ -22,8 +22,11 @@ class ConfigPage(Gtk.Grid):
         self.attach(opendir_button, 4, 0, 1, 1)
 
     def create_iconv(self):
-        return Gtk.IconView(activate_on_single_click=True, model = self.store, selection_mode=Gtk.SelectionMode.SINGLE,
-                             columns=3, item_width = 100, margin=15, pixbuf_column=0, text_column=1)
+        return Gtk.IconView(activate_on_single_click=True, model = self.store,
+                            selection_mode=Gtk.SelectionMode.SINGLE,
+                            columns=4, item_width = 100, margin=15,
+                            pixbuf_column=0, text_column=1,
+                            width_request=720, height_request=480)
 
     def create_opendir_button(self):
         b = Gtk.Button(label="Scan Directory")

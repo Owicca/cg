@@ -43,7 +43,8 @@ class ViewPage(Gtk.Grid):
 
     def create_image(self):
         return Gtk.Image(pixbuf=Pixbuf.new_from_file_at_scale("./images/placeholder.png",
-                                                              720, 480, True))
+                                                               720, 480, True),
+                          height_request=480, width_request=720)
 
     def update_image(self, path=None, pixbuf=None):
         if path:
