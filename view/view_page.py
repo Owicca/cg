@@ -4,8 +4,6 @@ from gi.repository import Gtk
 from gi.repository.GdkPixbuf import Pixbuf
 
 class ViewPage(Gtk.Grid):
-    cur_idx = 0
-
     def __init__(self, store):
         Gtk.Grid.__init__(self)
         self.store = store
@@ -44,11 +42,8 @@ class ViewPage(Gtk.Grid):
         return s
 
     def create_image(self):
-        pixbuf = Pixbuf.new_from_file_at_scale("./images/placeholder.png",
-                                               720, 480, True)
-        i = Gtk.Image.new_from_pixbuf(pixbuf)
-
-        return i
+        return Gtk.Image(pixbuf=Pixbuf.new_from_file_at_scale("./images/placeholder.png",
+                                                              720, 480, True))
 
     def update_image(self, path=None, pixbuf=None):
         if path:
@@ -65,8 +60,7 @@ class ViewPage(Gtk.Grid):
         previous, play, next button creation
         """
         control_box = Gtk.Grid()
-        self.prv = Gtk.Button(label="Previous")
-        self.prv.set_sensitive(False)
+        self.prv = Gtk.Button(label="Previous", sensitive=False)
         self.play = Gtk.ToggleButton(label="Paused")
         self.play.connect("toggled", self.play_pause)
         self.nxt = Gtk.Button(label="Next")
@@ -78,49 +72,33 @@ class ViewPage(Gtk.Grid):
         return control_box
 
     def prev_image(self, widget, data):
-        """
-        this is shit, get some sleep and rewrite it
-        """
-        if self.cur_idx == 0:
-            return True
-        if self.cur_idx > 0:
-            self.prv.set_sensitive(False)
-
-        if self.cur_idx < len(self.store):
-            self.nxt.set_sensitive(True)
-
-        if self.cur_idx == 0:
-            tree_iter = self.store.get_iter(Gtk.TreePath(0))
-        else:
-            tree_iter = self.store.get_iter(Gtk.TreePath(self.cur_idx - 1))
-
-        path = self.store.get_value(tree_iter, 2)
-        self.update_image(path=path)
-        self.cur_idx -= 1
+        selected = data["iconv"].get_selected_items()
+        if len(selected) > 0:
+            tree_iter = self.store.iter_previous(self.store.get_iter(selected[0]))
+            self.toggle_buttons(tree_iter)
+            data["iconv"].select_path(self.store.get_path(tree_iter))
+            data["iconv"].item_activated(self.store.get_path(tree_iter))
 
     def next_image(self, widget, data):
-        """
-        same shit as above
-        """
-        if self.cur_idx + 1 > len(self.store):
-            return True
-        if self.cur_idx + 1 == len(self.store):
-            self.nxt.set_sensitive(False)
-        else:
-            self.prv.set_sensitive(True)
-
-        if self.cur_idx == 0:
-            tree_iter = self.store.get_iter(Gtk.TreePath(1))
-        else:
-            tree_iter = self.store.get_iter(Gtk.TreePath(self.cur_idx + 1))
-
-        path = self.store.get_value(tree_iter, 2)
-        self.update_image(path=path)
-        self.cur_idx += 1
+        selected = data["iconv"].get_selected_items()
+        if len(selected) > 0:
+            tree_iter = self.store.iter_next(self.store.get_iter(selected[0]))
+            self.toggle_buttons(tree_iter)
+            data["iconv"].select_path(self.store.get_path(tree_iter))
+            data["iconv"].item_activated(self.store.get_path(tree_iter))
 
     def change_image(self, iconv, treepath_index, data):
         items = iconv.get_selected_items()
-        tree_iter = self.store.get_iter(items[0])
+        if len(items) > 0:
+            tree_iter = self.store.get_iter(items[0])
+        else:
+            tree_iter = self.store.get_iter_first()
         path = self.store.get_value(tree_iter, 2)
         self.update_image(path=path)
         data["notebook"].set_current_page(0)
+
+    def toggle_buttons(self, tree_iter):
+        idx = int(str(self.store.get_path(tree_iter)))
+
+        self.prv.set_sensitive(idx > 0)
+        self.nxt.set_sensitive(idx < (len(self.store)-1))

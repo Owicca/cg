@@ -12,27 +12,18 @@ class ConfigPage(Gtk.Grid):
         self.store = store
 
         self.iconv = self.create_iconv()
-        self.opendir_button = self.create_opendir_button()
-        scrolled = Gtk.ScrolledWindow()
+        scrolled = Gtk.ScrolledWindow(propagate_natural_height=True)
         scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        scrolled.set_propagate_natural_height(True)
         scrolled.add(self.iconv)
 
-        self.attach(scrolled, 0, 0, 4, 4)
-        self.attach(self.opendir_button, 5, 0, 1, 1)
+        opendir_button = self.create_opendir_button()
+
+        self.attach(scrolled, 0, 0, 3, 4)
+        self.attach(opendir_button, 4, 0, 1, 1)
 
     def create_iconv(self):
-        iconv = Gtk.IconView.new()
-        iconv.set_model(self.store)
-        iconv.set_selection_mode(Gtk.SelectionMode.SINGLE)
-        iconv.set_activate_on_single_click(True)
-        iconv.set_columns(4)
-        iconv.set_item_width(100)
-        iconv.set_margin(15)
-        iconv.set_pixbuf_column(0)
-        iconv.set_text_column(1)
-
-        return iconv
+        return Gtk.IconView(activate_on_single_click=True, model = self.store, selection_mode=Gtk.SelectionMode.SINGLE,
+                             columns=3, item_width = 100, margin=15, pixbuf_column=0, text_column=1)
 
     def create_opendir_button(self):
         b = Gtk.Button(label="Scan Directory")
@@ -49,7 +40,10 @@ class ConfigPage(Gtk.Grid):
             if res == Gtk.ResponseType.OK:
                 path = dialog.get_file().get_path()
                 self.store.populate(path)
-                dialog.hide()
+                tree_iter = self.store.get_iter_first()
+                self.iconv.item_activated(self.store.get_path(tree_iter))
+                self.iconv.select_path(self.store.get_path(tree_iter))
+            dialog.destroy()
 
         b.connect("clicked", open_dialog)
         return b

@@ -23,10 +23,16 @@ class Store(Gtk.ListStore):
             item = Path(child)
             if not self.check_file(item) and p.is_dir():
                 continue
-            pixbuf = Pixbuf.new_from_file_at_scale(bytes(child), 150, 150, True)
+            try:
+                pixbuf = Pixbuf.new_from_file_at_scale(bytes(child), 150, 150, True)
+            except:
+                continue
             self.append([pixbuf, item.name, str(item)])
 
     def check_file(self, path):
+        """
+        check if file extension is in allowed extensions
+        """
         p = Path(path)
         if not len(p.suffixes):
             return False
